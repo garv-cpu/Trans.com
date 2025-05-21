@@ -350,19 +350,6 @@ export default function App() {
               </option>
             ))}
         </select>
-
-        <select
-          value={style}
-          onChange={(e) => setStyle(e.target.value)}
-          className="bg-zinc-800 px-3 py-2 rounded border border-zinc-700 ml-auto"
-          title="Select style (informational only)"
-        >
-          {styles.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
       </div>
 
       {/* Input Textarea with mic and clear */}
