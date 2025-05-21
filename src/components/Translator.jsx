@@ -60,7 +60,7 @@ export default function App() {
 
   useEffect(() => {
     if (quizIndex >= segments.length) return; // Do nothing if quiz is over
-  
+
     if (timeLeft <= 0) {
       setStreak(0);
       setQuizInput("");
@@ -68,14 +68,14 @@ export default function App() {
       setQuizIndex((i) => (i + 1) % segments.length);
       return;
     }
-  
+
     const timer = setInterval(() => {
       setTimeLeft((t) => t - 1);
     }, 1000);
-  
+
     return () => clearInterval(timer);
   }, [timeLeft, quizIndex, segments.length]);
-  
+
   // Load favorites & recent from localStorage on mount
   useEffect(() => {
     const fav = localStorage.getItem("translator_favorites");
@@ -369,6 +369,14 @@ export default function App() {
           onChange={(e) => setInputText(e.target.value)}
           placeholder="Enter text to translate"
           className="w-full bg-zinc-800 p-3 rounded border border-zinc-700 resize-none focus:outline-none focus:border-yellow-500"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault(); // prevent newline insertion
+              if (!loading && inputText.trim()) {
+                handleTranslate();
+              }
+            }
+          }}
         />
         <button
           onClick={toggleListening}
@@ -494,7 +502,7 @@ export default function App() {
           </ul>
 
           {/* Interactive Quiz Mode */}
-          {/* <div className="mt-4 p-4 bg-zinc-700 rounded relative overflow-hidden transition-all">
+      {/* <div className="mt-4 p-4 bg-zinc-700 rounded relative overflow-hidden transition-all">
             <h3 className="text-lg font-semibold mb-3 text-center">
                Quiz Mode
             </h3>
@@ -599,8 +607,8 @@ export default function App() {
                   </button>
                 </div> */}
 
-                {/* Feedback */}
-                {/* {quizInput && (
+      {/* Feedback */}
+      {/* {quizInput && (
                   <p
                     className={`mt-3 text-center font-semibold text-xl ${
                       similarityScore(
@@ -636,15 +644,15 @@ export default function App() {
                 )}
 
                 {/* Score and Timer */}
-                {/* <div className="mt-3 text-center">
+      {/* <div className="mt-3 text-center">
                   <p className="text-white font-semibold">
                     🕒 Time left: {timeLeft}s | ⭐ Score: {score} | 🔥 Streak:{" "}
                     {streak}
                   </p>
                 </div> */}
 
-                {/* Progress Bar */}
-                {/* <div className="mt-4 h-2 bg-zinc-600 rounded">
+      {/* Progress Bar */}
+      {/* <div className="mt-4 h-2 bg-zinc-600 rounded">
                   <div
                     className="h-2 bg-yellow-500 rounded transition-all"
                     style={{
@@ -654,7 +662,7 @@ export default function App() {
                 </div>
               </>
             ) : ( */}
-              {/* <div className="text-center mt-4">
+      {/* <div className="text-center mt-4">
                 <h4 className="text-xl font-bold text-green-400 mb-2">
                   🏁 Quiz Complete!
                 </h4>
