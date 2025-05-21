@@ -240,9 +240,13 @@ export default function App() {
 
   // Start/stop speech recognition
   const toggleListening = () => {
+    if (!SpeechRecognition.browserSupportsSpeechRecognition()) {
+      return <p>Your browser does not support speech recognition.</p>;
+    }
     if (listening) SpeechRecognition.stopListening();
     else
       SpeechRecognition.startListening({
+        continuous: true,
         language: sourceLang === "auto" ? "en" : sourceLang,
       });
   };
