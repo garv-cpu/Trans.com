@@ -10,7 +10,6 @@ export const App = () => {
         <Route path="/" element={<Translator />}/>
         <Route path="/privacy" element={<PrivacyPolicy />} />
       </Routes>
-
       <footer className="p-4 bg-zinc-800 text-center text-yellow-400">
         <Link to="/privacy" className="hover:underline">
           Privacy Policy
