@@ -49,11 +49,33 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showHint, setShowHint] = useState(false);
+  const [score, setScore] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [quizMode, setQuizMode] = useState("normal"); // "normal" or "reverse"
+  const [timeLeft, setTimeLeft] = useState(15);
 
   const synth = window.speechSynthesis;
   const { transcript, resetTranscript, listening } = useSpeechRecognition();
   const outputRef = useRef(null);
 
+  useEffect(() => {
+    if (quizIndex >= segments.length) return; // Do nothing if quiz is over
+  
+    if (timeLeft <= 0) {
+      setStreak(0);
+      setQuizInput("");
+      setTimeLeft(15);
+      setQuizIndex((i) => (i + 1) % segments.length);
+      return;
+    }
+  
+    const timer = setInterval(() => {
+      setTimeLeft((t) => t - 1);
+    }, 1000);
+  
+    return () => clearInterval(timer);
+  }, [timeLeft, quizIndex, segments.length]);
+  
   // Load favorites & recent from localStorage on mount
   useEffect(() => {
     const fav = localStorage.getItem("translator_favorites");
@@ -100,6 +122,11 @@ export default function App() {
     const union = new Set([...aWords, ...bWords]);
 
     return intersection.size / union.size;
+  }
+  function scoreFeedback(score) {
+    if (score >= 0.7) return "🎉 Woohoo! Nailed it!";
+    if (score >= 0.4) return "🤔 Almost... try again!";
+    return "😓 Nope! Give it another shot.";
   }
 
   // Swap languages
@@ -279,7 +306,9 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-zinc-900 text-white p-6 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6 text-center">You are at Trans</h1>
+      <h1 className="text-3xl font-bold mb-6 text-center">
+        You are at <span className="text-yellow-500">Trans</span>
+      </h1>
 
       {/* Language selectors and swap */}
       <div className="flex flex-wrap items-center gap-3 mb-4 justify-center">
@@ -451,7 +480,7 @@ export default function App() {
         )}
       </div>
 
-      {/* Segments and Quiz Mode */}
+      {/* SEGMENTS AND QUIZ
       {segments.length > 0 && (
         <div className="mb-6">
           <h2 className="text-xl font-semibold mb-2">Translation Segments</h2>
@@ -465,118 +494,189 @@ export default function App() {
           </ul>
 
           {/* Interactive Quiz Mode */}
-          <div className="mt-4 p-4 bg-zinc-700 rounded relative overflow-hidden transition-all">
+          {/* <div className="mt-4 p-4 bg-zinc-700 rounded relative overflow-hidden transition-all">
             <h3 className="text-lg font-semibold mb-3 text-center">
-              🎯 Quiz Mode
+               Quiz Mode
             </h3>
 
-            <div className="text-center mb-2">
-              <p>
-                Translate into{" "}
-                <span className="font-semibold text-yellow-400">
-                  {languages.find((l) => l.code === targetLang)?.name}
-                </span>
-              </p>
-              <p className="text-xl italic font-semibold mt-2 text-zinc-100">
-                “{segments[quizIndex].original}”
-              </p>
-            </div>
+            <button
+              onClick={() =>
+                setQuizMode((m) => (m === "normal" ? "reverse" : "normal"))
+              }
+              className="absolute top-2 right-2 text-sm text-zinc-400 hover:text-yellow-400"
+            >
+               {quizMode === "normal" ? "Reverse Mode" : "Normal Mode"}
+            </button>
 
-            <input
-              type="text"
-              value={quizInput}
-              onChange={(e) => setQuizInput(e.target.value)}
-              className={`w-full p-3 rounded bg-zinc-800 border ${
-                quizInput &&
-                similarityScore(quizInput, segments[quizIndex].translated) >=
-                  0.7
-                  ? "border-green-500"
-                  : "border-zinc-600"
-              } text-white transition-all duration-300`}
-              placeholder="Type your translation..."
-            />
+            {quizIndex < segments.length ? (
+              <>
+                <div className="text-center mb-2">
+                  <p>
+                    Translate into{" "}
+                    <span className="font-semibold text-yellow-400">
+                      {languages.find((l) => l.code === targetLang)?.name}
+                    </span>
+                  </p>
+                  <p className="text-xl italic font-semibold mt-2 text-zinc-100">
+                    “
+                    {quizMode === "normal"
+                      ? segments[quizIndex].original
+                      : segments[quizIndex].translated}
+                    ”
+                  </p>
+                </div>
 
-            <div className="flex justify-between items-center mt-3">
-              <button
-                onClick={() =>
-                  setQuizIndex((i) => (i > 0 ? i - 1 : segments.length - 1))
-                }
-                className="bg-yellow-600 px-4 py-1.5 rounded hover:bg-yellow-500 font-semibold"
-              >
-                ⬅ Prev
-              </button>
-
-              <button
-                onClick={() => {
-                  const utterance = new SpeechSynthesisUtterance(
-                    segments[quizIndex].original
-                  );
-                  utterance.lang = "en"; // adjust if needed
-                  speechSynthesis.speak(utterance);
-                }}
-                className="bg-zinc-600 px-4 py-1.5 rounded hover:bg-zinc-500 font-semibold"
-              >
-                🔊 Speak
-              </button>
-
-              <button
-                onClick={() => setShowHint((prev) => !prev)}
-                className="bg-zinc-600 px-4 py-1.5 rounded hover:bg-zinc-500 font-semibold"
-              >
-                💡 {showHint ? "Hide Hint" : "Show Hint"}
-              </button>
-
-              <button
-                onClick={() => setQuizIndex((i) => (i + 1) % segments.length)}
-                className="bg-yellow-600 px-4 py-1.5 rounded hover:bg-yellow-500 font-semibold"
-              >
-                Next ➡
-              </button>
-            </div>
-
-            {quizInput && (
-              <p
-                className={`mt-3 text-center font-semibold ${
-                  similarityScore(quizInput, segments[quizIndex].translated) >=
-                  0.7
-                    ? "text-green-400 animate-pulse"
-                    : similarityScore(
-                        quizInput,
-                        segments[quizIndex].translated
-                      ) >= 0.4
-                    ? "text-yellow-400"
-                    : "text-red-400"
-                }`}
-              >
-                {similarityScore(quizInput, segments[quizIndex].translated) >=
-                0.7
-                  ? "✅ Close enough! Great job!"
-                  : similarityScore(
+                <input
+                  type="text"
+                  value={quizInput}
+                  onChange={(e) => setQuizInput(e.target.value)}
+                  className={`w-full p-3 rounded bg-zinc-800 border ${
+                    quizInput &&
+                    similarityScore(
                       quizInput,
-                      segments[quizIndex].translated
-                    ) >= 0.4
-                  ? "⚠ Almost there... check spelling or structure."
-                  : "❌ Not quite yet..."}
-              </p>
-            )}
+                      quizMode === "normal"
+                        ? segments[quizIndex].translated
+                        : segments[quizIndex].original
+                    ) >= 0.7
+                      ? "border-green-500"
+                      : "border-zinc-600"
+                  } text-white transition-all duration-300`}
+                  placeholder={
+                    quizMode === "normal"
+                      ? "Type your translation..."
+                      : "Type the original phrase..."
+                  }
+                />
 
-            {showHint && segments[quizIndex].transliteration && (
-              <p className="text-zinc-300 italic mt-2 text-center">
-                Hint: {segments[quizIndex].transliteration}
-              </p>
-            )}
+                <div className="flex justify-between items-center mt-3">
+                  <button
+                    onClick={() =>
+                      setQuizIndex((i) => (i > 0 ? i - 1 : segments.length - 1))
+                    }
+                    className="bg-yellow-600 px-4 py-1.5 rounded hover:bg-yellow-500 font-semibold"
+                  >
+                    ⬅ Prev
+                  </button>
 
-            <div className="mt-4 h-2 bg-zinc-600 rounded">
-              <div
-                className="h-2 bg-yellow-500 rounded transition-all"
-                style={{
-                  width: `${((quizIndex + 1) / segments.length) * 100}%`,
-                }}
-              ></div>
-            </div>
+                  <button
+                    onClick={() => {
+                      const utterance = new SpeechSynthesisUtterance(
+                        quizMode === "normal"
+                          ? segments[quizIndex].original
+                          : segments[quizIndex].translated
+                      );
+                      utterance.lang = "en";
+                      speechSynthesis.speak(utterance);
+                    }}
+                    className="bg-zinc-600 px-4 py-1.5 rounded hover:bg-zinc-500 font-semibold"
+                  >
+                     Speak
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      const scoreNow = similarityScore(
+                        quizInput,
+                        quizMode === "normal"
+                          ? segments[quizIndex].translated
+                          : segments[quizIndex].original
+                      );
+
+                      if (scoreNow >= 0.7) {
+                        setScore((s) => s + timeLeft * 10);
+                        setStreak((s) => s + 1);
+                      } else {
+                        setStreak(0);
+                      }
+
+                      setQuizInput("");
+                      setTimeLeft(15);
+                      setQuizIndex((i) => (i + 1) % segments.length);
+                    }}
+                    className="bg-yellow-600 px-4 py-1.5 rounded hover:bg-yellow-500 font-semibold"
+                  >
+                    Next ➡
+                  </button>
+                </div> */}
+
+                {/* Feedback */}
+                {/* {quizInput && (
+                  <p
+                    className={`mt-3 text-center font-semibold text-xl ${
+                      similarityScore(
+                        quizInput,
+                        quizMode === "normal"
+                          ? segments[quizIndex].translated
+                          : segments[quizIndex].original
+                      ) >= 0.7
+                        ? "text-green-400 animate-pulse"
+                        : similarityScore(
+                            quizInput,
+                            quizMode === "normal"
+                              ? segments[quizIndex].translated
+                              : segments[quizIndex].original
+                          ) >= 0.4
+                        ? "text-yellow-400"
+                        : "text-red-400"
+                    }`}
+                  >
+                    {(() => {
+                      const scoreNow = similarityScore(
+                        quizInput,
+                        quizMode === "normal"
+                          ? segments[quizIndex].translated
+                          : segments[quizIndex].original
+                      );
+                      if (scoreNow >= 0.7) return "🎉 Woohoo! Nailed it!";
+                      if (scoreNow >= 0.4)
+                        return "🤔 Almost... check structure or spelling.";
+                      return "😓 Not quite yet...";
+                    })()}
+                  </p>
+                )}
+
+                {/* Score and Timer */}
+                {/* <div className="mt-3 text-center">
+                  <p className="text-white font-semibold">
+                    🕒 Time left: {timeLeft}s | ⭐ Score: {score} | 🔥 Streak:{" "}
+                    {streak}
+                  </p>
+                </div> */}
+
+                {/* Progress Bar */}
+                {/* <div className="mt-4 h-2 bg-zinc-600 rounded">
+                  <div
+                    className="h-2 bg-yellow-500 rounded transition-all"
+                    style={{
+                      width: `${((quizIndex + 1) / segments.length) * 100}%`,
+                    }}
+                  ></div>
+                </div>
+              </>
+            ) : ( */}
+              {/* <div className="text-center mt-4">
+                <h4 className="text-xl font-bold text-green-400 mb-2">
+                  🏁 Quiz Complete!
+                </h4>
+                <p className="text-zinc-100">Final Score: {score}</p>
+                <p className="text-yellow-300">🔥 Highest Streak: {streak}</p>
+                <button
+                  onClick={() => {
+                    setQuizIndex(0);
+                    setScore(0);
+                    setStreak(0);
+                    setQuizInput("");
+                    setTimeLeft(15);
+                  }}
+                  className="mt-3 px-4 py-2 bg-yellow-500 rounded hover:bg-yellow-400"
+                >
+                  🔁 Replay Quiz
+                </button>
+              </div>
+            )}
           </div>
         </div>
-      )}
+      )}  */}
 
       {/* Favorites and Recent buttons */}
       <div className="flex gap-3 justify-center mb-6">
