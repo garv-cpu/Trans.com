@@ -14,7 +14,7 @@ import SpeechRecognition, {
 } from "react-speech-recognition";
 import { motion, AnimatePresence } from "framer-motion";
 import jsPDF from "jspdf";
-import Feature from './Feature'
+
 const languages = [
   { code: "auto", name: "Detect Language" },
   { code: "en", name: "English" },
@@ -387,7 +387,6 @@ export default function App() {
         </button>
       </div>
 
-            <Feature/>
       {/* Translate & Clear buttons */}
       <div className="flex gap-3 mb-4 justify-center">
         <button
