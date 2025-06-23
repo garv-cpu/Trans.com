@@ -19,14 +19,19 @@ const languages = [
   { code: "auto", name: "Detect Language" },
   { code: "en", name: "English" },
   { code: "hi", name: "Hindi" },
-  { code: "es", name: "Spanish" },
-  { code: "fr", name: "French" },
-  { code: "de", name: "German" },
-  { code: "ja", name: "Japanese" },
-  { code: "zh", name: "Chinese" },
-  { code: "ar", name: "Arabic" },
-  { code: "ru", name: "Russian" },
-  { code: "ko", name: "Korean" },
+  { code: "bn", name: "Bengali" },
+  { code: "gu", name: "Gujarati" },
+  { code: "kn", name: "Kannada" },
+  { code: "ml", name: "Malayalam" },
+  { code: "mr", name: "Marathi" },
+  { code: "ne", name: "Nepali" },
+  { code: "or", name: "Odia" },
+  { code: "pa", name: "Punjabi" },
+  { code: "ta", name: "Tamil" },
+  { code: "te", name: "Telugu" },
+  { code: "ur", name: "Urdu" },
+  { code: "as", name: "Assamese" },
+  { code: "sd", name: "Sindhi" },
 ];
 
 const styles = ["Default", "Formal", "Casual", "Poetic"];
@@ -226,31 +231,6 @@ export default function App() {
     }
   };
 
-  // Speak output text
-  const speakOutput = () => {
-    if (!outputText || !synth) return;
-    if (synth.speaking) {
-      synth.cancel();
-      return;
-    }
-    const utter = new SpeechSynthesisUtterance(outputText);
-    utter.lang = targetLang === "auto" ? "en-US" : targetLang;
-    synth.speak(utter);
-  };
-
-  // Start/stop speech recognition
-  const toggleListening = () => {
-    if (!SpeechRecognition.browserSupportsSpeechRecognition()) {
-      return <p>Your browser does not support speech recognition.</p>;
-    }
-    if (listening) SpeechRecognition.stopListening();
-    else
-      SpeechRecognition.startListening({
-        continuous: true,
-        language: sourceLang === "auto" ? "en" : sourceLang,
-      });
-  };
-
   // Add to favorites
   const addToFavorites = () => {
     if (!inputText || !outputText) return;
@@ -370,15 +350,6 @@ export default function App() {
           }}
         />
         <button
-          onClick={toggleListening}
-          title={listening ? "Stop Listening" : "Start Listening"}
-          className={`absolute top-2 right-15 p-2 rounded ${
-            listening ? "bg-red-600" : "bg-yellow-600"
-          } hover:opacity-80`}
-        >
-          <Mic />
-        </button>
-        <button
           onClick={() => setInputText("")}
           title="Clear Input"
           className="absolute top-2 right-2 p-2 rounded bg-zinc-700 hover:bg-zinc-600"
@@ -442,13 +413,6 @@ export default function App() {
             )}
             {/* Actions */}
             <div className="flex gap-3 mt-3">
-              <button
-                onClick={speakOutput}
-                title="Speak Output"
-                className="bg-yellow-600 p-2 rounded hover:bg-yellow-500"
-              >
-                <Volume2 />
-              </button>
               <button
                 onClick={copyOutput}
                 title="Copy Output"
@@ -775,7 +739,7 @@ export default function App() {
 
       {/* Footer */}
       <footer className="mt-10 text-sm text-gray-500 text-center">
-        © 2025 Trans. Built for the world.
+        © 2025 Trans. Built for india by Trans.
       </footer>
     </div>
   );
